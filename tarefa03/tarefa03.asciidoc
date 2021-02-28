@@ -1,0 +1,547 @@
++*In[1]:*+
+[source, mysql]
+----
+%LOAD postgresql dbname=Filmes
+----
+
+== Script SQL para a Tarefa 03 - Banco de Dados II 2020.2
+
+=== 28/02/2021
+
+=== Patric Lacouth - 20191370047
+
+== Nas questões 1.1 a 1.5, crie e execute o que se pede. Use subconsultas/subqueries para essas questões (3,5).
+
+== 1.1. O que a seguinte consulta apresenta (0,5)?
+
+[source,sql]
+----
+select f.titulo
+from filme f
+where f.codest in (select e.codest
+                   from estúdio e
+                   where nomeest like 'P%');
+----
+
+*R.: A consulta apresenta os filmes de estúdios que começam com a letra
+P*
+
+
++*In[23]:*+
+[source, mysql]
+----
+select f.titulo
+from filme f
+where f.codest in (select e.codest
+                   from estudio e
+                   where nomeest like 'P%');
+----
+
+
++*Out[23]:*+
+----
+[cols="",options="header",]
+|===
+|titulo
+|Encontro Explosivo
+|O Besouro Verde
+|Comer, Rezar, Amar
+|Coringa
+|Nasce uma estrela
+|PI
+|Clube da Luta
+|===
+
+7 rows in set (0,00 sec)
+----
+
+== 1.2. Mostre as descrições de categorias que estão na tabela Filme (associadas a filmes) (0,5).
+
+
++*In[7]:*+
+[source, mysql]
+----
+SELECT c.desccateg 
+FROM categoria c
+WHERE c.codcateg IN (SELECT f.codcateg FROM filme f);
+----
+
+
++*Out[7]:*+
+----
+[cols="",options="header",]
+|===
+|desccateg
+|Aventura
+|Romance
+|Ação
+|Drama
+|===
+
+4 rows in set (0,00 sec)
+----
+
+== 1.3. Qual o nome do artista cujo nome de personagem é `Natalie' (1,0)?
+
+
++*In[11]:*+
+[source, mysql]
+----
+SELECT a.nomeart 
+FROM artista a
+WHERE a.codart IN (SELECT p.codart 
+                   FROM personagem p
+                   WHERE p.nomepers ='Natalie');
+----
+
+
++*Out[11]:*+
+----
+[cols="",options="header",]
+|===
+|nomeart
+|Cameron Diaz
+|===
+
+1 row in set (0,00 sec)
+----
+
+== 1.4 Existe algum artista cadastrado que não esteja na tabela Personagem (1,0)?
+
+
++*In[19]:*+
+[source, mysql]
+----
+SELECT a.codart,a.nomeart 
+FROM artista a
+WHERE a.codart NOT IN (SELECT p.codart FROM personagem p);
+----
+
+
++*Out[19]:*+
+----
+[cols=",",options="header",]
+|===
+|codart |nomeart
+|6 |Tom Cruise
+|7 |Rodrigo Santoro
+|11 |Alessandra Negrini
+|12 |Fernanda Montenegro
+|===
+
+4 rows in set (0,00 sec)
+----
+
+== 1.5. Reescreva a consulta da questão 1.1 usando o operador exists (0,5).
+
+
++*In[31]:*+
+[source, mysql]
+----
+SELECT f.titulo
+FROM filme f
+WHERE EXISTS (SELECT *
+                   FROM estudio e
+                   WHERE e.nomeest LIKE 'P%' AND f.codest = e.codest);
+----
+
+
++*Out[31]:*+
+----
+[cols="",options="header",]
+|===
+|titulo
+|Encontro Explosivo
+|O Besouro Verde
+|Comer, Rezar, Amar
+|Coringa
+|Nasce uma estrela
+|PI
+|Clube da Luta
+|===
+
+7 rows in set (0,00 sec)
+----
+
+== 2. Crie uma tabela filmeEst (use create table as) que mostre os filmes (títulos) e seus estúdios (nomes) associados. Use um JOIN para isso. Consulte a tabela criada e mostre seus dados (1,0).
+
+
++*In[32]:*+
+[source, mysql]
+----
+CREATE TABLE filmeEst AS
+    SELECT f.titulo AS titulo, e.nomeest AS estudio
+    FROM filme f JOIN estudio e ON f.codest = e.codest;
+----
+
+
++*In[33]:*+
+[source, mysql]
+----
+SELECT * FROM filmeEst;
+----
+
+
++*Out[33]:*+
+----
+[cols=",",options="header",]
+|===
+|titulo |estudio
+|Encontro Explosivo |Paramount
+|O Besouro Verde |Paramount
+|Comer, Rezar, Amar |Paramount
+|Coringa |Paramount
+|Era uma vez em Hollywood |Disney
+|Nasce uma estrela |Paramount
+|PI |Paramount
+|The Matrix |Warner
+|Clube da Luta |Paramount
+|Superman |Universal
+|===
+
+10 rows in set (0,00 sec)
+----
+
+== 3. Verifique o seguinte comando (1,5):
+
+[source,sql]
+----
+select a.nomeart
+from artista a 
+where a.codart in (select p.codart
+                  from personagem p
+                  where p.codfilme in (select f.codfilme
+                                     from filme f
+                                     where f.duracao > 120));
+----
+
+*O que o comando retorna?*
+
+R.: O comando retorna o nome dos artista que têm personagem em filmes
+com mais de 120 minutos de duração.
+
+
++*In[34]:*+
+[source, mysql]
+----
+select a.nomeart
+from artista a 
+where a.codart in (select p.codart
+                  from personagem p
+                  where p.codfilme in (select f.codfilme
+                                     from filme f
+                                     where f.duracao > 120));
+----
+
+
++*Out[34]:*+
+----
+[cols="",options="header",]
+|===
+|nomeart
+|Cameron Diaz
+|Julia Roberts
+|Fulano de Tal
+|Brad Pitt
+|Joaquin Phoenix
+|===
+
+5 rows in set (0,00 sec)
+----
+
+== 3.1 Reescreva-o usando JOIN.
+
+
++*In[39]:*+
+[source, mysql]
+----
+SELECT a.nomeart
+FROM artista a JOIN personagem p ON a.codart = p.codart JOIN filme f ON f.codfilme = p.codfilme
+WHERE f.duracao > 120;
+
+----
+
+
++*Out[39]:*+
+----
+[cols="",options="header",]
+|===
+|nomeart
+|Cameron Diaz
+|Julia Roberts
+|Julia Roberts
+|Joaquin Phoenix
+|Fulano de Tal
+|Brad Pitt
+|===
+
+6 rows in set (0,00 sec)
+----
+
+== 3.2 Os resultados das consultas com subconsulta e com JOIN são semelhantes? Explique.
+
+R.: Os resultados são semelhantes mas não idênticos. Na consulta com
+JOIN o filtro do WHERE é aplicado para todas as linhas, no caso da
+consulta com IN o operador retorna TRUE apenas uma vez mesmo que na
+subconsulta apareçam dois resultados TRUE, por isso na consulta com JOIN
+artistas que aparecem em mais de um filme com mais de 120 minutos são
+contabilizados mais de uma vez.
+
+== 4. Verifique o comando seguinte (1,5):
+
+[source,sql]
+----
+select a.codart
+from artista a
+where pais = ‘USA’
+   INTERSECT
+select p.codart
+from personagem p;
+----
+
+
++*In[40]:*+
+[source, mysql]
+----
+select a.codart
+from artista a
+where pais = 'USA'
+   INTERSECT
+select p.codart
+from personagem p;
+
+----
+
+
++*Out[40]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|1
+|3
+|5
+|4
+|2
+|===
+
+5 rows in set (0,01 sec)
+----
+
+== 4.1 O que o comando retorna?
+
+R.: O camando retorna os artista que tem o país igual a `USA' e também
+aparecem na tabela de personagens.
+
+== 4.2 Refaça-o usando uma subquery.
+
+
++*In[42]:*+
+[source, mysql]
+----
+SELECT a.codart FROM artista a
+WHERE a.pais = 'USA' AND a.codart IN (SELECT p.codart FROM personagem p);
+----
+
+
++*Out[42]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|1
+|2
+|5
+|3
+|4
+|===
+
+5 rows in set (0,00 sec)
+----
+
+== 4.3 Depois, refaça-o usando JOIN.
+
+
++*In[43]:*+
+[source, mysql]
+----
+SELECT a.codart
+FROM artista a JOIN personagem p ON a.codart = p.codart
+WHERE a.pais = 'USA';
+----
+
+
++*Out[43]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|1
+|2
+|3
+|2
+|5
+|4
+|3
+|===
+
+7 rows in set (0,00 sec)
+----
+
+== 4.4 Compare os resultados e explique-os.
+
+R.: O operador IN impede que valores repetidos sejam mostrados no
+resultado da consulta.
+
+== 5. Verifique agora o seguinte comando (1,5):
+
+[source,sql]
+----
+select a.codart
+from artista a
+  EXCEPT
+select p.codart
+from personagem p;
+----
+
+
++*In[44]:*+
+[source, mysql]
+----
+select a.codart
+from artista a
+  EXCEPT
+select p.codart
+from personagem p;
+----
+
+
++*Out[44]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|6
+|7
+|11
+|12
+|===
+
+4 rows in set (0,00 sec)
+----
+
+== 5.1 O que o comando retorna?
+
+R.: O comando retorna os artista quem não possuem nenhum personagem
+associados na tabela de personagens.
+
+== 5.2 Refaça-o usando uma subquery.
+
+
++*In[45]:*+
+[source, mysql]
+----
+SELECT a.codart FROM artista a
+WHERE a.codart NOT IN (SELECT p.codart FROM personagem p);
+----
+
+
++*Out[45]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|6
+|7
+|11
+|12
+|===
+
+4 rows in set (0,00 sec)
+----
+
+== 5.3 Depois, refaça-o usando JOIN (Utilize o left ou right join).
+
+
++*In[49]:*+
+[source, mysql]
+----
+SELECT a.codart
+FROM artista a LEFT JOIN personagem p ON a.codart = p.codart
+WHERE p.codart IS NULL;
+----
+
+
++*Out[49]:*+
+----
+[cols="",options="header",]
+|===
+|codart
+|6
+|7
+|11
+|12
+|===
+
+4 rows in set (0,00 sec)
+----
+
+== 6. Verifique agora o seguinte comando (1,0):
+
+[source,sql]
+----
+select a.nomeart
+from artista a join personagem p on a.codart = p.codart
+where p.cache = (select max(p.cache) from personagem p);
+----
+
+
++*In[50]:*+
+[source, mysql]
+----
+select a.nomeart
+from artista a join personagem p on a.codart = p.codart
+where p.cache = (select max(p.cache) from personagem p);
+----
+
+
++*Out[50]:*+
+----
+[cols="",options="header",]
+|===
+|nomeart
+|Brad Pitt
+|===
+
+1 row in set (0,01 sec)
+----
+
+== 6.1 O que o comando retorna?
+
+R.: Retorna o artista com a maior cache.
+
+== 6.2 É possível executá-lo sem a subconsulta? Por quê?
+
+R.: Sim, utilizando JOIN, ORDER BY e LIMIT.
+
+
++*In[51]:*+
+[source, mysql]
+----
+SELECT a.nomeart
+FROM artista a JOIN personagem p ON a.codart = p.codart
+ORDER BY p.cache DESC
+LIMIT 1;
+----
+
+
++*Out[51]:*+
+----
+[cols="",options="header",]
+|===
+|nomeart
+|Brad Pitt
+|===
+
+1 row in set (0,00 sec)
+----
